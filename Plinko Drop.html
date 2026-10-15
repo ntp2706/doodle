@@ -61,7 +61,7 @@ const SL=['#91B9E6','#F7F3EC'],MINT='#9BC9A7';
 const R=22.5,PR=8,G=420,DR=.45,SW=110,TOP=720,BOT=840,BAND=60,H=BOT+BAND+8,S=165; // bi to gấp 3; đinh cách nhau 2,75 lần đường kính bi; trọng lực thấp + cản gió để bi rơi lâu
 const PH=[0,.5,.25,.75,.125,.625]; // 4 pha lệch nhau để mọi đường rơi thẳng đều chạm đinh
 const F=p=>'800 '+Math.round(p*.75)+'px Nunito,system-ui,sans-serif';
-let N,K,W,sw,balls=[],slots=[],sims=[],pegs=[],segs=[],sel=0,phase=1,mx=null;
+let N,K,W,sw,wl=0,wr=0,balls=[],slots=[],sims=[],pegs=[],segs=[],sel=0,phase=1,mx=null;
 const lines=id=>$(id).value.split('\n').map(s=>s.trim()).filter(Boolean);
 const shuffle=a=>{for(let i=a.length;i--;){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 function cnt(){const n=+$('#n').value;$('#k').max=n;if(+$('#k').value>n)$('#k').value=n;const k=+$('#k').value;$('#nv').textContent=n;$('#kv').textContent=k;
@@ -75,8 +75,8 @@ function setup(){
  slots=shuffle(L).map(l=>({lab:l.t,sec:l.s,ball:null,torn:-1,a:0,rot:(Math.random()-.5)*.1,gate:null}));
  const old=balls;balls=Array.from({length:N},(_,i)=>{const o=old[i]||{};return{name:o.name||'Bi '+(i+1),color:MINT,img:o.img,src:o.src,dropped:false}});
  pegs=[];PH.forEach((ph,r)=>{for(let j=-12;j<=12;j++){const x=W/2+(j+ph)*S;if(x>=10&&x<=W-10)pegs.push({x,y:150+r*95})}});
- segs=[];for(let i=0;i<=N;i++)segs.push([i*sw,(i&&i<N)?TOP:0,i*sw,BOT]);
- sims=[];sel=0;phase=1;$('#log').innerHTML='';renderBalls();upd();fit();
+ segs=[];for(let i=0;i<=N;i++)segs.push([i*sw,TOP,i*sw,BOT]);
+ sims=[];sel=0;phase=1;wl=0;wr=W;$('#log').innerHTML='';renderBalls();upd();fit();
 }
 function renderBalls(){const bl=$('#bl');bl.innerHTML='';balls.forEach((b,i)=>{
  const d=document.createElement('div');d.className='ball'+(b.dropped?' off':'')+(i==sel?' sel':'');
@@ -97,7 +97,8 @@ function circ(b,px,py,pr,hi){const dx=b.x-px,dy=b.y-py,d=Math.hypot(dx,dy),m=R+p
  if(d<m&&d>0){const nx=dx/d,ny=dy/d;b.x=px+nx*m;b.y=py+ny*m;bounce(b,nx,ny,hi)}}
 function seg(b,a){const dx=a[2]-a[0],dy=a[3]-a[1];let t=((b.x-a[0])*dx+(b.y-a[1])*dy)/(dx*dx+dy*dy);t=Math.max(0,Math.min(1,t));circ(b,a[0]+t*dx,a[1]+t*dy,3,a[4])}
 function spikes(i){const x=i*sw,n=3,w=sw/n,a=[];for(let k=0;k<n;k++)a.push([x+k*w,TOP,x+k*w+w/2,TOP-26,1],[x+k*w+w/2,TOP-26,x+(k+1)*w,TOP,1]);return a}
-function step(dt){const all=segs.concat(...slots.filter(s=>s.gate).map(s=>s.gate));
+function walls(dt){let l=0;while(l<N&&slots[l].ball)l++;let r=0;if(l<N)while(r<N-l&&slots[N-1-r].ball)r++;const tl=l*sw,tr=W-r*sw,v=330*dt;wl+=Math.max(-v,Math.min(v,tl-wl));wr+=Math.max(-v,Math.min(v,tr-wr))}
+function step(dt){const all=segs.concat([[wl,0,wl,TOP],[wr,0,wr,TOP]],...slots.filter(s=>s.gate).map(s=>s.gate));
  for(const b of sims){
   if(b.done){const q=b.auto?.05:.15;b.x+=(b.cx-b.x)*q;b.y+=(BOT-R-b.y)*q;continue}
   b.vy+=G*dt;const dg=1-DR*dt;b.vx*=dg;b.vy*=dg;b.x+=b.vx*dt;b.y+=b.vy*dt;
@@ -133,12 +134,13 @@ function draw(dt){
  slots.forEach((s,i)=>{ctx.fillStyle=SL[i%2];ctx.globalAlpha=.4;ctx.fillRect(i*sw,TOP,sw,BOT-TOP);ctx.globalAlpha=1;
   ctx.fillStyle=SL[i%2];ctx.fillRect(i*sw,BOT,sw,BAND);ctx.strokeStyle='#34465C';ctx.lineWidth=4;ctx.strokeRect(i*sw,BOT,sw,BAND);
   ctx.font=F(24);ctx.fillStyle='#34465C';ctx.textAlign='center';const ls=wrap(s.lab,sw-10);ls.forEach((l,k)=>ctx.fillText(l,(i+.5)*sw,BOT+BAND/2+7-(ls.length-1)*11+k*22))});
- ctx.lineCap='square';ctx.strokeStyle='#91B9E6';ctx.lineWidth=6;segs.forEach(a=>{ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(a[2],a[3]);ctx.stroke()});
+ ctx.lineCap='square';ctx.strokeStyle='#91B9E6';ctx.lineWidth=6;segs.concat([[wl,0,wl,TOP],[wr,0,wr,TOP]]).forEach(a=>{ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(a[2],a[3]);ctx.stroke()});
  for(const p of pegs){ctx.beginPath();ctx.arc(p.x,p.y,PR+1,0,7);ctx.fillStyle='#91B9E6';ctx.fill();ctx.lineWidth=3;ctx.strokeStyle='#34465C';ctx.stroke()}
+ ctx.fillStyle='rgba(247,243,236,.7)';ctx.fillRect(0,0,wl,TOP);ctx.fillRect(wr,0,W-wr,TOP);
  for(const s of slots)if(s.gate){const g=s.gate;ctx.beginPath();ctx.moveTo(g[0][0],TOP);g.forEach(a=>ctx.lineTo(a[2],a[3]));ctx.lineTo(g[g.length-1][2],TOP+8);ctx.lineTo(g[0][0],TOP+8);ctx.closePath();ctx.fillStyle='#F2A3A8';ctx.fill();ctx.lineWidth=5;ctx.lineJoin='miter';ctx.strokeStyle='#F7F3EC';ctx.stroke()}
  slots.forEach((s,i)=>{if(!s.sec)return;if(s.torn>=0)s.a=Math.min(1,s.a+dt*2);if(s.a<1)sticker((i+.5)*sw,BOT+BAND/2,i,s)});
  for(const b of sims)drawBall(b.x,b.y,b.i,balls[b.i].name);
- if(phase==1&&sel>=0&&mx!=null){const x=Math.max(R+10,Math.min(W-R-10,mx));ctx.setLineDash([8,8]);ctx.strokeStyle='#F2A3A8';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x,95);ctx.lineTo(x,135);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=.7;drawBall(x,62,sel,balls[sel].name);ctx.globalAlpha=1}
+ if(phase==1&&sel>=0&&mx!=null){const x=Math.max(wl+R+10,Math.min(wr-R-10,mx));ctx.setLineDash([8,8]);ctx.strokeStyle='#F2A3A8';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x,95);ctx.lineTo(x,135);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=.7;drawBall(x,62,sel,balls[sel].name);ctx.globalAlpha=1}
 }
 const pt=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]};
 const hit=(x,y)=>{const i=Math.floor(x/sw),s=slots[i];return(s&&s.sec&&s.torn<0&&y>BOT&&y<BOT+BAND)?i:-1};
@@ -146,13 +148,13 @@ const tear=i=>{const s=slots[i];s.torn=0;s.a=0;note(s.ball?`XÉ: ${balls[s.ball.
 cv.onpointermove=e=>{const[x,y]=pt(e);mx=x;cv.style.cursor=hit(x,y)>=0?'pointer':(phase==2?'default':'crosshair')};
 cv.onclick=e=>{const[x,y]=pt(e),h=hit(x,y);if(h>=0)return tear(h);
  if(phase==1){if(sel<0)return;const b=balls[sel];b.dropped=true;
-  sims.push({i:sel,x:Math.max(R+10,Math.min(W-R-10,x)),y:62,vx:(Math.random()-.5)*50,vy:0,slot:null,t:0,done:false});
+  sims.push({i:sel,x:Math.max(wl+R+10,Math.min(wr-R-10,x)),y:62,vx:(Math.random()-.5)*50,vy:0,slot:null,t:0,done:false});
   sel=balls.findIndex(b=>!b.dropped);renderBalls();upd()}
  else{const i=hit(x,y);if(i>=0){const s=slots[i];s.torn=0;s.a=0;note(`XÉ: ${balls[s.ball.i].name} - ${s.lab}`);upd()}}};
 $('#apply').onclick=setup;['#n','#k','#pub','#sec'].forEach(s=>$(s).oninput=cnt);addEventListener('resize',fit);
 let last=performance.now();
 function loop(t){const dt=Math.min(.033,(t-last)/1000);last=t;
- for(let k=0;k<5;k++)step(dt/5);
+ walls(dt);for(let k=0;k<5;k++)step(dt/5);
  if(phase==1&&sims.length==N){const f=sims.filter(b=>b.slot==null);if(f.length==1){const i=slots.findIndex(s=>!s.ball);if(i>=0){const b=f[0],s=slots[i];s.ball=b;b.slot=i;s.gate=spikes(i);b.done=true;b.auto=1;b.cx=(i+.5)*sw;note(`${balls[b.i].name} là bi cuối: tự vào đích ${i+1}`)}}}
  if(phase==1&&balls.every(b=>b.dropped)&&sims.every(s=>s.done)){phase=2;upd();note('--- PHASE 2: xé nhãn bí mật ---')}
  draw(dt);requestAnimationFrame(loop)}
