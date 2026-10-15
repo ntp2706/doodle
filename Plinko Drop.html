@@ -1,28 +1,28 @@
 <!DOCTYPE html>
 <html lang="vi"><head><meta charset="utf-8"><title>Plinko Drop</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#F7F3EC;--ink:#34465C;--card:#FFFDF8;--dot:#E6E0D3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#222d3a;--ink:#F7F3EC;--card:#2e3b4b;--dot:#2a3646}}
 *{box-sizing:border-box}
 html,body{height:100%;margin:0;overflow:hidden}
-body{display:flex;flex-direction:column;gap:8px;padding:10px 12px;background:var(--bg);color:var(--ink);font:20px/1.1 VT323,'Courier New',monospace;background-image:radial-gradient(var(--dot) 2px,transparent 2px);background-size:20px 20px}
+body{display:flex;flex-direction:column;gap:8px;padding:10px 12px;background:var(--bg);color:var(--ink);font:600 16px/1.3 Nunito,system-ui,sans-serif;background-image:radial-gradient(var(--dot) 2px,transparent 2px);background-size:20px 20px}
 header{flex:none;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-h1{font-size:30px;letter-spacing:3px;margin:0;background:#F2A3A8;color:#34465C;border:4px solid #34465C;box-shadow:4px 4px 0 #34465C;padding:2px 12px}
-#phase{font-size:24px;background:#F2D477;color:#34465C;border:4px solid #34465C;box-shadow:4px 4px 0 #34465C;padding:2px 10px}
+h1{font-size:26px;font-weight:800;letter-spacing:1px;margin:0;background:#F2A3A8;color:#34465C;border:4px solid #34465C;box-shadow:4px 4px 0 #34465C;padding:2px 12px}
+#phase{font-size:18px;font-weight:800;background:#F2D477;color:#34465C;border:4px solid #34465C;box-shadow:4px 4px 0 #34465C;padding:2px 10px}
 #tip{flex:1;min-width:160px;opacity:.85}
 main{flex:1;min-height:0;display:flex;gap:14px}
 #wrap{flex:1;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center}
 canvas{display:block;border:4px solid var(--ink);box-shadow:5px 5px 0 var(--ink);background:#F7F3EC;image-rendering:pixelated;touch-action:manipulation}
 aside{flex:none;width:290px;overflow:auto;display:flex;flex-direction:column;gap:12px;padding:0 6px 6px 0}
 .card{background:var(--card);border:4px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:8px}
-.card h2{font-size:22px;letter-spacing:2px;margin:-8px -8px 6px;padding:2px 8px;color:#34465C;border-bottom:4px solid var(--ink)}
+.card h2{font-size:17px;font-weight:800;letter-spacing:1px;margin:-8px -8px 6px;padding:2px 8px;color:#34465C;border-bottom:4px solid var(--ink)}
 label.f{display:block;margin:5px 0 2px}
-textarea,input[type=text]{width:100%;font:20px VT323,'Courier New',monospace;background:var(--card);color:var(--ink);border:3px solid var(--ink);padding:3px 5px}
+textarea,input[type=text]{width:100%;font:600 15px Nunito,system-ui,sans-serif;background:var(--card);color:var(--ink);border:3px solid var(--ink);padding:3px 5px}
 textarea{height:58px;resize:vertical}
 input[type=range]{width:100%;accent-color:#F2A3A8}
-.btn{display:inline-block;font:22px VT323,'Courier New',monospace;background:#F2D477;color:#34465C;border:3px solid #34465C;box-shadow:3px 3px 0 #34465C;padding:2px 8px;cursor:pointer;text-align:center}
+.btn{display:inline-block;font:800 15px Nunito,system-ui,sans-serif;background:#F2D477;color:#34465C;border:3px solid #34465C;box-shadow:3px 3px 0 #34465C;padding:2px 8px;cursor:pointer;text-align:center}
 .btn:active{transform:translate(3px,3px);box-shadow:none}
 .btn.big{width:100%;margin-top:8px;padding:4px}
 .ball{display:flex;gap:6px;align-items:center;margin-bottom:6px}
@@ -31,8 +31,8 @@ input[type=range]{width:100%;accent-color:#F2A3A8}
 .av{flex:none;width:30px;height:30px;border:3px solid var(--ink);border-radius:50%;overflow:hidden;cursor:pointer}
 .av img{width:100%;height:100%;object-fit:cover}
 .ball input[type=text]{min-width:0}
-#log{margin:0;padding-left:20px;max-height:110px;overflow:auto}
-.hint{opacity:.8;font-size:18px}
+#log{margin:0;padding-left:34px;font-size:15px;max-height:110px;overflow:auto}
+.hint{opacity:.8;font-size:14px}
 @media(max-width:760px){main{flex-direction:column}aside{width:100%;max-height:40%}}
 h1,#phase,.card,.btn,textarea,input[type=text],canvas{border-radius:12px}.card h2{border-radius:8px 8px 0 0}.btn,.card,h1,#phase,canvas{box-shadow-color:#34465C}
 :root{--ink:#34465C}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#F7F3EC}}
@@ -60,7 +60,7 @@ const $=s=>document.querySelector(s),cv=$('#c'),ctx=cv.getContext('2d');
 const SL=['#91B9E6','#F7F3EC'],MINT='#9BC9A7';
 const R=22.5,PR=8,G=420,DR=.45,SW=110,TOP=720,BOT=840,BAND=60,H=BOT+BAND+8,S=165; // bi to gấp 3; đinh cách nhau 2,75 lần đường kính bi; trọng lực thấp + cản gió để bi rơi lâu
 const PH=[0,.5,.25,.75,.125,.625]; // 4 pha lệch nhau để mọi đường rơi thẳng đều chạm đinh
-const F=p=>p+'px VT323,"Courier New",monospace';
+const F=p=>'800 '+Math.round(p*.75)+'px Nunito,system-ui,sans-serif';
 let N,K,W,sw,balls=[],slots=[],sims=[],pegs=[],segs=[],sel=0,phase=1,mx=null;
 const lines=id=>$(id).value.split('\n').map(s=>s.trim()).filter(Boolean);
 const shuffle=a=>{for(let i=a.length;i--;){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
@@ -87,7 +87,7 @@ function renderBalls(){const bl=$('#bl');bl.innerHTML='';balls.forEach((b,i)=>{
  bl.appendChild(d)})}
 function upd(){const left=balls.filter(b=>!b.dropped).length,t=slots.filter(s=>s.sec&&s.torn<0).length;
  $('#phase').textContent=phase==1?`PHASE 1 · THẢ BI (${left})`:`PHASE 2 · XÉ NHÃN (${t})`;
- $('#tip').textContent=phase==1?'Chọn bi bên phải (bấm avatar), rồi bấm vào bàn chơi để thả bi tại vị trí đó.':'Bấm vào sticker ? bất kỳ để xé, thứ tự tùy bạn.'}
+ $('#tip').textContent=phase==1?'Chọn bi bên phải (bấm avatar), rồi bấm vào bàn chơi để thả bi. Có thể bấm sticker ? để xé bất cứ lúc nào.':'Bấm vào sticker ? bất kỳ để xé, thứ tự tùy bạn.'}
 function note(t){const li=document.createElement('li');li.textContent=t;$('#log').appendChild(li);li.scrollIntoView()}
 function bounce(b,nx,ny,hi){const vn=b.vx*nx+b.vy*ny;if(vn>=0)return;
  const e=hi?1.6+Math.random()*.6:.4+Math.random()*.5;b.vx-=(1+e)*vn*nx;b.vy-=(1+e)*vn*ny;
@@ -141,9 +141,10 @@ function draw(dt){
  if(phase==1&&sel>=0&&mx!=null){const x=Math.max(R+10,Math.min(W-R-10,mx));ctx.setLineDash([8,8]);ctx.strokeStyle='#F2A3A8';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x,95);ctx.lineTo(x,135);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=.7;drawBall(x,62,sel,balls[sel].name);ctx.globalAlpha=1}
 }
 const pt=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]};
-const hit=(x,y)=>{const i=Math.floor(x/sw),s=slots[i];return(phase==2&&s&&s.sec&&s.torn<0&&y>BOT&&y<BOT+BAND)?i:-1};
-cv.onpointermove=e=>{const[x,y]=pt(e);mx=x;cv.style.cursor=phase==2?(hit(x,y)>=0?'pointer':'default'):'crosshair'};
-cv.onclick=e=>{const[x,y]=pt(e);
+const hit=(x,y)=>{const i=Math.floor(x/sw),s=slots[i];return(s&&s.sec&&s.torn<0&&y>BOT&&y<BOT+BAND)?i:-1};
+const tear=i=>{const s=slots[i];s.torn=0;s.a=0;note(s.ball?`XÉ: ${balls[s.ball.i].name} - ${s.lab}`:`XÉ: ${s.lab} (chưa có bi vào)`);upd()};
+cv.onpointermove=e=>{const[x,y]=pt(e);mx=x;cv.style.cursor=hit(x,y)>=0?'pointer':(phase==2?'default':'crosshair')};
+cv.onclick=e=>{const[x,y]=pt(e),h=hit(x,y);if(h>=0)return tear(h);
  if(phase==1){if(sel<0)return;const b=balls[sel];b.dropped=true;
   sims.push({i:sel,x:Math.max(R+10,Math.min(W-R-10,x)),y:62,vx:(Math.random()-.5)*50,vy:0,slot:null,t:0,done:false});
   sel=balls.findIndex(b=>!b.dropped);renderBalls();upd()}
