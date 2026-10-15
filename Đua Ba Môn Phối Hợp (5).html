@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Đua Ba Môn Phối Hợp</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f6f7fb;--card:#fff;--text:#1d2433;--muted:#6b7385;--accent:#ff6b35;--line:#e3e6ee;--run:#e9d3b0;--swim:#7cc4f0;--bike:#b9bdc6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12151c;--card:#1b2029;--text:#eef0f6;--muted:#8d95a8;--line:#2b3140;--run:#5a4a33;--swim:#1f5f8b;--bike:#3d424d}}
+:root[data-theme="dark"]{--bg:#12151c;--card:#1b2029;--text:#eef0f6;--muted:#8d95a8;--line:#2b3140;--run:#5a4a33;--swim:#1f5f8b;--bike:#3d424d}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+.app{height:100%;display:flex;flex-direction:column;gap:6px;padding:8px 12px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+h1{font-size:18px;margin:0}
+#ticker{flex:1;min-width:120px;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#clock{font-variant-numeric:tabular-nums;font-weight:700;font-size:17px}
+button.b{border:none;border-radius:9px;padding:7px 13px;font-size:13px;cursor:pointer;background:var(--line);color:var(--text)}
+button.main{background:var(--accent);color:#fff;font-weight:600}
+button:disabled{opacity:.5;cursor:not-allowed}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 10px}
+summary{cursor:pointer;font-size:13px;font-weight:600}
+.players{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;max-height:30vh;overflow:auto}
+.pl{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:9px;padding:4px 6px}
+.pl input[type=text]{border:none;background:transparent;color:var(--text);width:84px;font-size:13px;outline:none}
+.av{width:30px;height:30px;border-radius:50%;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;cursor:pointer;flex:none;border:2px solid var(--c)}
+.x{border:none;background:none;color:var(--muted);cursor:pointer;font-size:14px}
+#wrap{flex:1;min-height:0;overflow-x:auto;overflow-y:hidden;cursor:grab;user-select:none;overflow-anchor:none;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 8px}
+#track{height:100%;display:flex;flex-direction:column;justify-content:center;gap:3px}
+.zones{display:flex;height:17px;font-size:12px;color:var(--muted);margin-left:76px}
+.zones div{flex:1;text-align:center}
+.row{display:flex;align-items:center;gap:6px}
+.nmx{width:70px;flex:none;text-align:right;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;position:sticky;left:0;z-index:20;background:var(--card);padding:2px 4px;border-radius:6px}
+.lane{position:relative;flex:none;border-radius:8px;overflow:visible;clip-path:inset(-140px 0 -140px 0);background:linear-gradient(90deg,var(--run) 0 33.33%,var(--swim) 33.33% 66.66%,var(--bike) 66.66% 100%)}
+.lane::before{content:"";position:absolute;left:33.33%;width:33.33%;top:0;bottom:0;background:repeating-linear-gradient(100deg,transparent 0 14px,rgba(255,255,255,.25) 14px 18px);animation:wave 1.2s linear infinite}
+.lane::after{content:"";position:absolute;right:0;top:0;bottom:0;width:8px;background:repeating-conic-gradient(#000 0 25%,#fff 0 50%) 0 0/8px 8px;z-index:5}
+@keyframes wave{to{background-position:36px 0}}
+.flash{animation:fl .35s 2}
+@keyframes fl{50%{box-shadow:inset 0 0 0 100px rgba(255,255,255,.85)}}
+.stage{position:absolute;left:0;height:72px;transform-origin:0 0}
+.runner{position:absolute;top:0;width:70px;height:72px;z-index:3}
+.avw{position:absolute;inset:0}
+.body{position:absolute;inset:0}.body svg{display:block;overflow:hidden}
+.head{position:absolute;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.ph-run .head{left:22px;top:0}.ph-swim .head{left:42px;top:24px}.ph-bike .head{left:32px;top:3px}
+.l1,.a2,.k1{animation:swg .22s ease-in-out infinite alternate}
+.l2,.a1,.k2{animation:swg .22s ease-in-out infinite alternate-reverse}
+@keyframes swg{from{transform:rotate(-45deg)}to{transform:rotate(45deg)}}
+.k1,.k2{animation-name:kk}
+@keyframes kk{from{transform:rotate(-16deg)}to{transform:rotate(16deg)}}
+.armc{animation:spn .6s linear infinite}.wheel{animation:spn .3s linear infinite}
+@keyframes spn{to{transform:rotate(360deg)}}
+.wtr{animation:wt .7s linear infinite}
+@keyframes wt{to{transform:translateX(-16px)}}
+.say{position:absolute;left:44px;top:-6px;background:#fff;color:#222;border:2px solid #222;border-radius:10px;padding:0 6px;font-size:13px;font-weight:800;white-space:nowrap;z-index:6;animation:pop .35s ease-out}
+@keyframes pop{from{transform:scale(0)}}
+.avw.fx *{animation-play-state:paused}
+.avw.slip{animation:rot .55s linear 4}
+@keyframes rot{to{transform:rotate(-360deg) translateY(-6px)}}
+.avw.shock{animation:shk .08s linear infinite,inv .3s steps(2) infinite}
+@keyframes shk{0%{transform:translate(-2px,1px)}50%{transform:translate(2px,-1px)}100%{transform:translate(-1px,2px)}}
+@keyframes inv{50%{filter:invert(1) brightness(1.4)}}
+.avw.bitten{animation:shk .1s linear infinite;filter:drop-shadow(0 0 5px red)}
+.avw.sick{animation:wob 1s ease-in-out infinite;filter:hue-rotate(70deg) saturate(1.6)}
+@keyframes wob{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}
+.avw.flat .rw{animation:none;transform:translateY(5px) scaleY(.55)}
+.avw.arrest{filter:grayscale(.7)}
+.fxi{position:absolute;z-index:4;line-height:0;pointer-events:none}
+.fxi.cloud{top:0;animation:wob 1s infinite}
+.fxi.bolt{top:26px;animation:drop .25s ease-in}
+@keyframes drop{from{transform:translateY(-40px);opacity:0}}
+.fxi.shark{top:30px}.fxi.shark.chase{animation:chs .25s ease-in-out infinite alternate}@keyframes chs{from{transform:translateY(0)}to{transform:translateY(-4px) rotate(-3deg)}}.fxi.shark.dive{animation:dive .7s ease-in forwards}@keyframes dive{to{transform:translate(70px,30px) rotate(25deg);opacity:0}}
+@keyframes jaw{from{transform:rotate(0)}to{transform:rotate(-14deg) translateY(-8px)}}
+.fxi.fling{animation:fling .5s ease-out forwards}
+@keyframes fling{to{transform:translate(30px,-50px) rotate(500deg);opacity:0}}
+.fxi.boom{animation:boom .6s ease-out forwards}
+@keyframes boom{from{transform:scale(.3)}60%{transform:scale(1.4)}to{transform:scale(1.7);opacity:0}}
+.fxi.wv{top:40px;animation:wob .5s infinite}
+.fxi.car{top:28px}
+.fxi.abn{top:0;z-index:2;animation:drp .45s ease-out}
+@keyframes drp{from{transform:translate(0,-22px) rotate(-30deg)}}
+.fxi.ghost{top:8px;z-index:9;animation:gh 3.4s ease-out forwards}
+@keyframes gh{0%{transform:translate(0,0);opacity:.95}50%{transform:translate(12px,-60px) scale(1.15)}100%{transform:translate(-8px,-130px) scale(1.3);opacity:0}}
+.runner.flee{transform:scaleX(-1)}.runner.flee .say{transform:scaleX(-1)}
+.runner.dead{filter:grayscale(1) brightness(.35);transform:rotate(80deg);transform-origin:35px 66px}
+.fxi.fine{top:6px;z-index:9;font:800 20px system-ui;line-height:1;color:#e11d2e;-webkit-text-stroke:3px #fff;paint-order:stroke fill;animation:fn 1.5s ease-out forwards}
+@keyframes fn{from{transform:translateY(8px) scale(.5);opacity:0}25%{opacity:1;transform:translateY(-6px) scale(1.1)}to{transform:translateY(-52px);opacity:0}}
+.fxi.bill{top:30px;z-index:9;animation:bl 1.4s ease-out forwards}
+@keyframes bl{to{transform:translate(var(--dx),-64px) rotate(var(--r));opacity:0}}
+.sl{animation:blk .3s steps(2) infinite}.sl2{animation:blk .3s steps(2) infinite reverse}
+@keyframes blk{0%{opacity:1}100%{opacity:.15}}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+#modal.on{display:flex}
+.mc{background:var(--card);border-radius:14px;padding:16px;width:min(440px,100%);max-height:85vh;overflow:auto}
+.rank{display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--line)}
+.rank:last-child{border:none}
+.medal{width:26px;text-align:center;font-weight:700}
+.empty{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <h1>Đua Ba Môn Phối Hợp</h1>
+    <button class="b main" id="start">▶ Bắt đầu đua</button>
+    <button class="b" id="follow">Theo dõi</button><div id="clock">0.0s</div>
+    <div id="ticker"></div>
+  </div>
+  <details id="pd" open>
+    <summary>Người chơi (<span id="cnt">0</span>/16) — bấm vào ảnh tròn để tải hình đại diện</summary>
+    <div class="players" id="players"></div>
+    <div style="margin-top:8px"><button class="b" id="add">+ Thêm người chơi</button></div>
+  </details>
+  <div id="wrap"><div id="track"></div></div>
+</div>
+<div id="modal"><div class="mc"><strong>Kết quả</strong><div id="result"></div>
+  <div style="text-align:right;margin-top:10px"><button class="b main" id="close">Đóng</button></div></div></div>
+
+<script>
+let players=[],racing=false,uid=0,W=0,hazards=[];
+const SKIN='#f2c9a0',PANTS='#2b3a67',MAX=16,LANEW=4200;let S=1,manualUntil=0,focus=null;
+
+const BODY={
+run:c=>`<svg width="70" height="72" viewBox="0 0 70 72">
+<g class="a1" style="transform-origin:35px 30px"><rect x="33" y="29" width="5" height="15" rx="2.5" fill="${SKIN}"/></g>
+<g class="l1" style="transform-origin:35px 44px"><rect x="32" y="44" width="6" height="19" rx="3" fill="${PANTS}"/><rect x="31" y="61" width="11" height="5" rx="2.5" fill="#fff" stroke="#333"/></g>
+<g class="l2" style="transform-origin:35px 44px"><rect x="32" y="44" width="6" height="19" rx="3" fill="${PANTS}"/><rect x="31" y="61" width="11" height="5" rx="2.5" fill="#fff" stroke="#333"/></g>
+<rect x="27" y="25" width="16" height="21" rx="7" fill="${c}"/>
+<g class="a2" style="transform-origin:35px 30px"><rect x="33" y="29" width="5" height="15" rx="2.5" fill="${SKIN}"/></g></svg>`,
+swim:c=>`<svg width="70" height="72" viewBox="0 0 70 72">
+<g class="k1" style="transform-origin:24px 45px"><rect x="4" y="43" width="22" height="5" rx="2.5" fill="${SKIN}"/></g>
+<g class="k2" style="transform-origin:24px 45px"><rect x="4" y="43" width="22" height="5" rx="2.5" fill="${SKIN}"/></g>
+<rect x="22" y="38" width="28" height="12" rx="6" fill="${c}"/>
+<g class="armc" style="transform-origin:44px 42px"><rect x="42" y="40" width="20" height="4" rx="2" fill="${SKIN}"/></g>
+<g class="wtr"><path d="M0 50q8-5 16 0t16 0t16 0t16 0t16 0t16 0V72H0z" fill="rgba(40,130,210,.6)"/></g></svg>`,
+bike:c=>`<svg width="70" height="72" viewBox="0 0 70 72">
+<g class="wheel rw" style="transform-origin:14px 60px"><circle cx="14" cy="60" r="11" fill="none" stroke="#222" stroke-width="2.5"/><path d="M14 49V71M3 60H25" stroke="#666" stroke-width="1.5"/></g>
+<g class="wheel" style="transform-origin:56px 60px"><circle cx="56" cy="60" r="11" fill="none" stroke="#222" stroke-width="2.5"/><path d="M56 49V71M45 60H67" stroke="#666" stroke-width="1.5"/></g>
+<path d="M14 60L34 60L30 44ZM34 60L48 46L30 44M56 60L48 46L51 41" fill="none" stroke="#c0392b" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<g class="l1" style="transform-origin:30px 44px"><rect x="28" y="44" width="5" height="17" rx="2.5" fill="${PANTS}"/><rect x="27" y="59" width="9" height="4" rx="2" fill="#fff" stroke="#333"/></g>
+<path d="M30 44L42 31" stroke="${c}" stroke-width="10" stroke-linecap="round"/>
+<path d="M42 31L51 41" stroke="${SKIN}" stroke-width="4" stroke-linecap="round"/></svg>`};
+
+const SVG={
+bike:`<svg width="70" height="72" viewBox="0 0 70 72"><ellipse cx="14" cy="66" rx="11" ry="5" fill="none" stroke="#222" stroke-width="2.5"/><circle cx="56" cy="60" r="11" fill="none" stroke="#222" stroke-width="2.5"/><path d="M56 49V71M45 60H67" stroke="#666" stroke-width="1.5"/><path d="M14 66L34 60L30 44ZM34 60L48 46L30 44M56 60L48 46L51 41" fill="none" stroke="#c0392b" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`,
+ghost:`<svg width="34" height="40" viewBox="0 0 34 40"><path d="M3 38V16C3 6 10 1 17 1S31 6 31 16V38L26 33L21 38L17 33L13 38L8 33Z" fill="#fff" stroke="#9aa" stroke-width="1.5"/><circle cx="12" cy="16" r="3" fill="#333"/><circle cx="22" cy="16" r="3" fill="#333"/><ellipse cx="17" cy="25" rx="3" ry="4" fill="#333"/></svg>`,
+bill:`<svg width="24" height="13" viewBox="0 0 24 13"><rect x=".5" y=".5" width="23" height="12" rx="2" fill="#5cc26a" stroke="#2b7a38"/><circle cx="12" cy="6.5" r="3.2" fill="#a9e6b1"/></svg>`,
+banana:`<svg width="30" height="30" viewBox="0 0 30 30"><path d="M5 8Q6 24 24 24Q27 24 27 21Q14 22 11 6Z" fill="#ffd93b" stroke="#a87a00" stroke-width="1.5" stroke-linejoin="round"/><path d="M5 8L9 3L11 6Z" fill="#6b4a1a"/></svg>`,
+cloud:`<svg width="56" height="34" viewBox="0 0 56 34"><g fill="#4b5468"><circle cx="16" cy="20" r="11"/><circle cx="30" cy="14" r="13"/><circle cx="43" cy="21" r="10"/><rect x="12" y="20" width="36" height="11" rx="5"/></g><path d="M19 13l7 4M41 13l-7 4" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><circle cx="24" cy="21" r="2" fill="#fff"/><circle cx="36" cy="21" r="2" fill="#fff"/></svg>`,
+bolt:`<svg width="34" height="46" viewBox="0 0 34 60"><polygon points="20,0 4,34 15,34 10,60 30,24 18,24 26,0" fill="#ffe14d" stroke="#ff9d00" stroke-width="2.5" stroke-linejoin="round"/></svg>`,
+shark:`<svg width="72" height="40" viewBox="0 -4 72 40"><path d="M28 11L38-2L42 12Z" fill="#5c7a99"/><path d="M2 22C14 8 36 8 54 16L68 6L64 22L70 32L52 26C34 34 14 32 2 22Z" fill="#6f8fb0"/><path d="M4 23C16 30 34 32 52 26L52 24C34 28 16 26 4 23Z" fill="#fff"/><path d="M5 23l3 4l3-3l3 4l3-3" fill="#fff" stroke="#fff"/><circle cx="14" cy="17" r="2.5" fill="#fff"/><circle cx="13.5" cy="17" r="1.2" fill="#000"/></svg>`,
+wave:`<svg width="60" height="30" viewBox="0 0 60 30"><path d="M0 18q8-14 16 0t16 0t16 0t12 0V30H0z" fill="#3b8ed0" opacity=".85"/><path d="M0 12q8-12 16 0t16 0t16 0t12 0" fill="none" stroke="#fff" stroke-width="2.5" opacity=".8"/></svg>`,
+boom:`<svg width="54" height="54" viewBox="-27 -27 54 54"><polygon points="0,-26 6,-10 22,-14 12,-2 26,6 9,8 8,24 0,12 -8,24 -9,8 -26,6 -12,-2 -22,-14 -6,-10" fill="#ffd23f" stroke="#e8451c" stroke-width="2.5"/><text y="4" text-anchor="middle" font-size="10" font-weight="800" fill="#c2300f">BÙM!</text></svg>`,
+car:`<svg width="80" height="44" viewBox="0 0 80 44"><rect x="2" y="18" width="76" height="16" rx="5" fill="#2f63d6"/><path d="M16 18L24 6H54L64 18Z" fill="#2f63d6"/><path d="M22 17L28 9H38V17ZM41 17V9H51L58 17Z" fill="#cfe9ff"/><circle cx="46" cy="14" r="3.5" fill="${SKIN}"/><rect x="42" y="8" width="9" height="3" rx="1" fill="#123"/><rect x="2" y="25" width="76" height="4" fill="#fff"/><rect x="30" y="1" width="9" height="5" rx="2" fill="#f22" class="sl"/><rect x="41" y="1" width="9" height="5" rx="2" fill="#27f" class="sl2"/><circle cx="20" cy="34" r="7" fill="#222"/><circle cx="20" cy="34" r="3" fill="#aaa"/><circle cx="60" cy="34" r="7" fill="#222"/><circle cx="60" cy="34" r="3" fill="#aaa"/></svg>`};
+
+const SEGS=[{s:0,types:['banana','lightning']},{s:1/3,types:['shark','seasick']},{s:2/3,types:['flat','police']}];
+const EFF={banana:{dur:2.2,mult:0,cls:'slip fx',say:'Úi!',log:n=>`${n} trượt vỏ chuối ngã lăn quay!`},
+ lightning:{dur:2.6,mult:0,cls:'shock fx',say:'Á á!',log:n=>`${n} bị sét đánh, linh hồn bay lên trời...`},
+ shark:{dur:2.6,mult:-1.3,cls:'flee',say:'Cứu!',log:n=>`${n} bị cá mập đuổi, phải bơi ngược lại!`},
+ seasick:{dur:3.6,mult:.35,cls:'sick',say:'Ọe...',log:n=>`${n} bị say sóng, bơi lảo đảo...`},
+ flat:{dur:3,mult:0,cls:'flat fx',say:'Xẹp!',log:n=>`${n} bể bánh, bỏ xe lại và chạy bộ về đích!`},
+ police:{dur:3.2,mult:0,cls:'arrest fx',say:'Dừng!',log:n=>`${n} bị cảnh sát giao thông bắt lại!`}};
+const WARN={banana:0,lightning:1,shark:1.4,seasick:.9,flat:.15,police:1.1};
+
+function addPlayer(name){if(players.length>=MAX)return;const id=++uid;players.push({id,name:name||('Player '+id),img:null,color:`hsl(${(id*47)%360} 65% 48%)`});renderPlayers()}
+function headStyle(p){return p.img?`background-image:url(${p.img})`:`background-color:${p.color}`}
+function initial(p){return p.img?'':(p.name.trim()[0]||'?').toUpperCase()}
+
+function renderPlayers(){
+  document.getElementById('cnt').textContent=players.length;
+  const box=document.getElementById('players');box.innerHTML='';
+  players.forEach(p=>{
+    const d=document.createElement('div');d.className='pl';
+    const av=document.createElement('div');av.className='av';av.style.cssText=headStyle(p)+';--c:#fff';av.textContent=initial(p);
+    const f=document.createElement('input');f.type='file';f.accept='image/*';f.hidden=true;
+    av.onclick=()=>!racing&&f.click();
+    f.onchange=()=>{const file=f.files[0];if(!file)return;const r=new FileReader();r.onload=()=>{p.img=r.result;renderPlayers()};r.readAsDataURL(file)};
+    const t=document.createElement('input');t.type='text';t.value=p.name;t.maxLength=14;
+    t.oninput=()=>{p.name=t.value;if(!p.img){av.textContent=initial(p);p.head.textContent=initial(p)}p.nm.textContent=p.name};
+    const x=document.createElement('button');x.className='x';x.textContent='✕';
+    x.onclick=()=>{if(racing||players.length<=2)return;players=players.filter(q=>q!==p);renderPlayers()};
+    d.append(av,f,t,x);box.appendChild(d);
+  });
+  if(!racing)buildTrack();
+}
+
+function buildTrack(){
+  const tr=document.getElementById('track');
+  tr.innerHTML='<div class="zones"><div>Chạy bộ</div><div>Bơi</div><div>Đạp xe</div></div>';
+  players.forEach(p=>{
+    const row=document.createElement('div');row.className='row';
+    row.innerHTML=`<div class="nmx"></div><div class="lane"><div class="stage"><div class="runner"><div class="avw"><div class="body"></div></div><div class="head"></div></div></div></div>`;
+    tr.appendChild(row);
+    Object.assign(p,{nm:row.querySelector('.nmx'),lane:row.querySelector('.lane'),stage:row.querySelector('.stage'),el:row.querySelector('.runner'),
+      avw:row.querySelector('.avw'),body:row.querySelector('.body'),head:row.querySelector('.head'),say:null,phase:null,prog:p.prog||0});
+    p.nm.textContent=p.name;p.head.style.cssText=headStyle(p);p.head.textContent=initial(p);
+  });
+  layout();players.forEach(place);
+}
+
+function layout(){
+  const area=document.getElementById('wrap'),n=players.length;if(!n)return;
+  const LH=Math.max(20,Math.min(96,Math.floor((area.clientHeight-12-20-3*n)/n)));
+  const s=Math.min(1.25,LH/72);
+  document.querySelectorAll('.nmx').forEach(e=>e.style.fontSize=Math.max(9,Math.min(13,LH*.45))+'px');
+  players.forEach(p=>{
+    p.lane.style.height=LH+'px';p.lane.style.width=LANEW+'px';
+    p.stage.style.width=(LANEW/s)+'px';
+    p.stage.style.transform=`scale(${s})`;
+    p.stage.style.top=((LH-72*s)/2)+'px';
+  });
+  S=s;W=LANEW/s-80;document.getElementById('track').style.width=(LANEW+78)+'px';document.querySelector('.zones').style.width=LANEW+'px';
+}
+new ResizeObserver(()=>{layout();players.forEach(p=>p.lane&&place(p))}).observe(document.getElementById('wrap'));
+
+function place(p){
+  p.el.style.left=(p.prog*W)+'px';
+  let ph=p.prog<1/3?'run':p.prog<2/3?'swim':'bike';if(p.foot&&ph==='bike')ph='run';
+  if(p.phase!==ph){p.phase=ph;p.el.className='runner ph-'+ph;p.body.innerHTML=BODY[ph](p.color)}
+}
+
+function fx(p,html,cls,x,y){
+  const e=document.createElement('span');e.className='fxi '+(cls||'');e.innerHTML=html;e.style.left=x+'px';
+  if(y!=null)e.style.top=y+'px';p.stage.appendChild(e);return e;
+}
+function rm(e,ms){setTimeout(()=>e.remove(),ms)}
+function log(t){document.getElementById('ticker').textContent=t}
+
+function planHazards(){
+  hazards=[];
+  const types=SEGS.flatMap(s=>s.types).filter(t=>t!=='flat');
+  const pool=['banana','seasick','police'];
+  const extra=Math.max(3,players.length);
+  for(let i=0;i<extra;i++)types.push(pool[Math.floor(Math.random()*pool.length)]);
+  const order=[...players].sort(()=>Math.random()-.5);
+  types.forEach((type,i)=>{
+    const si=SEGS.findIndex(s=>s.types.includes(type));
+    const lo=SEGS[si].s+0.04,hi=SEGS[si].s+1/3-0.06;
+    hazards.push({type,p:order[i%order.length],pos:lo+Math.random()*(hi-lo),st:'wait',t:0,els:[]});
+  });
+  [...players].sort(()=>Math.random()-.5).slice(0,Math.max(1,Math.round(players.length/5))).forEach(p=>hazards.push({type:'flat',p,pos:0.71+Math.random()*0.23,st:'wait',t:0,els:[]}));
+}
+
+function fire(h){
+  const p=h.p,e=EFF[h.type];
+  p.hits=(p.hits||0)+1;
+  log(e.log(p.name));
+  if(h.type==='lightning'){
+    p.dead=true;p.fx=null;h.st='done';focus={p,until:performance.now()+3500};
+    p.avw.className='avw shock fx';
+    const px0=p.prog*W+35;
+    rm(fx(p,SVG.bolt,'bolt',px0-17),700);p.lane.classList.add('flash');setTimeout(()=>p.lane.classList.remove('flash'),750);
+    setTimeout(()=>{p.avw.className='avw';p.el.classList.add('dead');h.els.forEach(x=>x.remove());rm(fx(p,SVG.ghost,'ghost',px0-17),3400);if(p.say){p.say.remove();p.say=null}},1300);
+    return;
+  }
+  if(h.type==='flat'){
+    p.foot=true;p.phase=null;h.st='done';
+    rm(fx(p,SVG.boom,'boom',p.prog*W-13,32),650);
+    h.els.push(fx(p,SVG.bike,'abn',p.prog*W,0));
+    if(p.say)p.say.remove();
+    p.say=document.createElement('div');p.say.className='say';p.say.textContent=e.say;p.el.appendChild(p.say);
+    setTimeout(()=>{if(p.say){p.say.remove();p.say=null}},1600);
+    return;
+  }
+  p.fx={...e,t:e.dur,h};
+  p.avw.className='avw '+e.cls;
+  if(h.type==='shark')p.el.classList.add('flee');
+  if(p.say)p.say.remove();
+  p.say=document.createElement('div');p.say.className='say';p.say.textContent=e.say;p.el.appendChild(p.say);
+  const px=p.prog*W+35;
+  if(h.type==='banana'){h.els.forEach(x=>{x.classList.add('fling');rm(x,500)});h.els=[]}
+  if(h.type==='shark')h.els[0].classList.add('chase');
+  if(h.type==='seasick'){h.els.forEach(x=>x.remove());h.els=[]}
+  if(h.type==='flat'){rm(fx(p,SVG.boom,'boom',px-48,32),650)}
+  if(h.type==='police'){const amt=[50,100,150,200,300][Math.floor(Math.random()*5)];
+    setTimeout(()=>{const q=p.prog*W+35;rm(fx(p,'-$'+amt,'fine',q-26),1500);
+      [-14,6,26].forEach((dx,i)=>{const b=fx(p,SVG.bill,'bill',q+dx-12);b.style.setProperty('--dx',(dx*1.5)+'px');b.style.setProperty('--r',(i*30-30)+'deg');b.style.animationDelay=(i*.12)+'s';rm(b,1700)})},700)}
+}
+
+const OFF={shark:10,police:38};
+function updHaz(h,dt){
+  if(h.st==='done')return;
+  const p=h.p,px=p.prog*W+35;
+  if(p.dead&&h.type!=='lightning'){h.els.forEach(e=>e.remove());h.st='done';return}
+  if(h.st==='wait'){
+    if(h.type==='banana'){
+      if(!h.els.length&&p.prog>=h.pos-0.07)h.els.push(fx(p,SVG.banana,'',h.pos*W+22,40));
+      if(p.prog>=h.pos&&!p.fx){h.st='fx';fire(h)}
+      return;
+    }
+    if(p.prog>=h.pos&&!p.fx){
+      h.st='warn';h.t=0;
+      if(h.type==='lightning')h.els.push(fx(p,SVG.cloud,'cloud',px-28));
+      if(h.type==='shark')h.els.push(fx(p,SVG.shark,'shark',px+140));
+      if(h.type==='seasick')h.els.push(fx(p,SVG.wave,'wv',px));
+      if(h.type==='police')h.els.push(fx(p,SVG.car,'car',px+230));
+    }
+    return;
+  }
+  const x=h.els[0];
+  if(h.st==='warn'){
+    h.t+=dt;const k=Math.max(0,1-h.t/WARN[h.type]);
+    if(x){
+      if(h.type==='lightning')x.style.left=(px-28)+'px';
+      if(h.type==='shark')x.style.left=(px+10+170*k)+'px';
+      if(h.type==='seasick')x.style.left=(px-30+40*k)+'px';
+      if(h.type==='police')x.style.left=(px+38+190*k)+'px';
+    }
+    if(h.t>=WARN[h.type]){h.st='fx';fire(h)}
+    return;
+  }
+  if(h.st==='fx'){
+    if(x&&OFF[h.type]!==undefined)x.style.left=(px+OFF[h.type])+'px';
+    if(p.fx&&p.fx.h===h)return;
+    h.els.forEach(e=>{if(h.type==='police'){e.style.transition='left 1s ease-in,opacity 1s';e.style.left=(parseFloat(e.style.left)+320)+'px';e.style.opacity=0;rm(e,1000)}else if(h.type==='shark'){e.classList.remove('chase');e.classList.add('dive');rm(e,700)}else e.remove()});
+    h.st='done';
+  }
+}
+
+function start(){
+  if(racing)return;
+  racing=true;document.getElementById('start').disabled=true;
+  document.getElementById('pd').open=false;document.getElementById('ticker').textContent='';
+  players.forEach(p=>{p.prog=0});
+  buildTrack();
+  document.getElementById('wrap').scrollLeft=0;focus=null;manualUntil=0;
+  players.forEach(p=>{p.finished=false;p.dead=false;p.foot=false;p.fx=null;p.hits=0;
+    p.str=[0,1,2].map(()=>0.93+Math.random()*0.18);p.noise=0});
+  planHazards();
+  const order=[],base=[0.0205,0.0185,0.0225],clock=document.getElementById('clock');
+  let last=performance.now(),t0=last;
+  function loop(now){
+    const dt=Math.max(0,Math.min((now-last)/1000,0.05));last=now;
+    const act=players.filter(q=>!q.dead&&!q.finished),mean=act.length?act.reduce((a,q)=>a+q.prog,0)/act.length:1;
+    clock.textContent=((now-t0)/1000).toFixed(1)+'s';
+    players.forEach(p=>{
+      if(p.finished||p.dead)return;
+      let mult=1;
+      if(p.fx){p.fx.t-=dt;mult=p.fx.mult;
+        if(p.fx.t<=0){p.fx=null;p.avw.className='avw';if(p.say){p.say.remove();p.say=null}p.phase=null}}
+      const seg=Math.max(0,Math.min(2,Math.floor(p.prog*3)));
+      p.noise=Math.max(-0.25,Math.min(0.25,p.noise+(Math.random()-0.5)*0.6*dt));
+      if(p.foot&&mult>0)mult*=0.65;
+      const rb=mult>=0?Math.max(0.72,Math.min(p.foot?1.15:1.35,1-4*(p.prog-mean))):1;
+      p.prog+=base[seg]*p.str[seg]*(1+p.noise)*mult*rb*dt;
+      if(p.fx&&p.fx.mult<0)p.prog=Math.max(p.prog,0.335);
+      if(!(p.prog>=0))p.prog=0;
+      if(p.prog>=1){p.prog=1;p.finished=true;order.push({p,time:(now-t0)/1000})}
+      place(p);
+    });
+    hazards.forEach(h=>updHaz(h,dt));
+    if(now>manualUntil){
+      const wr=document.getElementById('wrap'),vw=wr.clientWidth,live=players.filter(q=>!q.dead);
+      const hi=Math.max(...live.map(q=>q.prog)),unf=live.filter(q=>!q.finished),lo=unf.length?Math.min(...unf.map(q=>q.prog)):hi;
+      const k=W*S,rEdge=76+hi*k+75*S,lEdge=76+lo*k;
+      let t;
+      if(focus&&now<focus.until)t=76+focus.p.prog*k+35*S-vw*0.5;
+      else{t=(rEdge+lEdge)/2-vw/2;t=Math.min(t,lEdge-96);t=Math.max(t,rEdge-vw+20)}
+      wr.scrollLeft+=(t-wr.scrollLeft)*0.1;
+    }
+    if(order.length<players.filter(q=>!q.dead).length)requestAnimationFrame(loop);
+    else{hazards.forEach(h=>h.els.forEach(e=>e.remove()));players.filter(q=>q.dead).forEach(q=>order.push({p:q,time:null}));showResult(order);racing=false;document.getElementById('start').disabled=false;document.getElementById('pd').open=true}
+  }
+  requestAnimationFrame(loop);
+}
+
+function showResult(order){
+  const box=document.getElementById('result');box.innerHTML='';
+  const medals=['🥇','🥈','🥉'];
+  order.forEach((o,i)=>{
+    const d=document.createElement('div');d.className='rank';
+    d.innerHTML=`<div class="medal">${o.time==null?'💀':(medals[i]||(i+1))}</div><div class="av" style="${headStyle(o.p)};--c:#fff;cursor:default">${initial(o.p)}</div><div style="flex:1;font-weight:600"></div><div class="empty">${o.time==null?'bị sét đánh':'cản '+o.p.hits+' lần · '+o.time.toFixed(1)+'s'}</div>`;
+    d.children[2].textContent=o.p.name;box.appendChild(d);
+  });
+  document.getElementById('modal').classList.add('on');
+}
+
+document.getElementById('close').onclick=()=>document.getElementById('modal').classList.remove('on');
+document.getElementById('add').onclick=()=>{if(!racing)addPlayer()};
+document.getElementById('start').onclick=start;
+(function(){const wr=document.getElementById('wrap');const man=()=>{manualUntil=performance.now()+2500};
+ wr.addEventListener('wheel',e=>{e.preventDefault();wr.scrollLeft+=e.deltaY+e.deltaX;man()},{passive:false});
+ wr.addEventListener('touchstart',man,{passive:true});wr.addEventListener('touchmove',man,{passive:true});
+ let dx=null,sl=0;
+ wr.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'){dx=e.clientX;sl=wr.scrollLeft;man();wr.style.cursor='grabbing'}});
+ window.addEventListener('pointermove',e=>{if(dx!==null){wr.scrollLeft=sl-(e.clientX-dx);man()}});
+ window.addEventListener('pointerup',()=>{dx=null;wr.style.cursor='grab'});
+ document.getElementById('follow').onclick=()=>{manualUntil=0}})();
+['An','Bình','Chi','Dũng'].forEach(addPlayer);
+</script>
+</body>
+</html>

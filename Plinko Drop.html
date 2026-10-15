@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8"><title>Plinko Drop</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F7F3EC;--ink:#34465C;--card:#FFFDF8;--dot:#E6E0D3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#222d3a;--ink:#F7F3EC;--card:#2e3b4b;--dot:#2a3646}}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden}
+body{display:flex;flex-direction:column;gap:8px;padding:10px 12px;background:var(--bg);color:var(--ink);font:20px/1.1 VT323,'Courier New',monospace;background-image:radial-gradient(var(--dot) 2px,transparent 2px);background-size:20px 20px}
+header{flex:none;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+h1{font-size:30px;letter-spacing:3px;margin:0;background:#F2A3A8;color:#34465C;border:4px solid #34465C;box-shadow:4px 4px 0 #34465C;padding:2px 12px}
+#phase{font-size:24px;background:#F2D477;color:#34465C;border:4px solid #34465C;box-shadow:4px 4px 0 #34465C;padding:2px 10px}
+#tip{flex:1;min-width:160px;opacity:.85}
+main{flex:1;min-height:0;display:flex;gap:14px}
+#wrap{flex:1;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center}
+canvas{display:block;border:4px solid var(--ink);box-shadow:5px 5px 0 var(--ink);background:#F7F3EC;image-rendering:pixelated;touch-action:manipulation}
+aside{flex:none;width:290px;overflow:auto;display:flex;flex-direction:column;gap:12px;padding:0 6px 6px 0}
+.card{background:var(--card);border:4px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:8px}
+.card h2{font-size:22px;letter-spacing:2px;margin:-8px -8px 6px;padding:2px 8px;color:#34465C;border-bottom:4px solid var(--ink)}
+label.f{display:block;margin:5px 0 2px}
+textarea,input[type=text]{width:100%;font:20px VT323,'Courier New',monospace;background:var(--card);color:var(--ink);border:3px solid var(--ink);padding:3px 5px}
+textarea{height:58px;resize:vertical}
+input[type=range]{width:100%;accent-color:#F2A3A8}
+.btn{display:inline-block;font:22px VT323,'Courier New',monospace;background:#F2D477;color:#34465C;border:3px solid #34465C;box-shadow:3px 3px 0 #34465C;padding:2px 8px;cursor:pointer;text-align:center}
+.btn:active{transform:translate(3px,3px);box-shadow:none}
+.btn.big{width:100%;margin-top:8px;padding:4px}
+.ball{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.ball.sel .av{outline:4px solid #F2A3A8;outline-offset:2px}
+.ball.off{opacity:.45}
+.av{flex:none;width:30px;height:30px;border:3px solid var(--ink);border-radius:50%;overflow:hidden;cursor:pointer}
+.av img{width:100%;height:100%;object-fit:cover}
+.ball input[type=text]{min-width:0}
+#log{margin:0;padding-left:20px;max-height:110px;overflow:auto}
+.hint{opacity:.8;font-size:18px}
+@media(max-width:760px){main{flex-direction:column}aside{width:100%;max-height:40%}}
+h1,#phase,.card,.btn,textarea,input[type=text],canvas{border-radius:12px}.card h2{border-radius:8px 8px 0 0}.btn,.card,h1,#phase,canvas{box-shadow-color:#34465C}
+:root{--ink:#34465C}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#F7F3EC}}
+canvas{border-color:#34465C}</style></head><body>
+<header><h1>PLINKO DROP</h1><div id="phase">PHASE 1</div><div id="tip"></div></header>
+<main>
+<div id="wrap"><canvas id="c"></canvas></div>
+<aside>
+<div class="card"><h2 style="background:#91B9E6">CẤU HÌNH</h2>
+<label class="f">Số đích = số bi: <b id="nv">6</b></label><input type="range" id="n" min="2" max="16" value="6">
+<label class="f">Số nhãn bí mật: <b id="kv">3</b></label><input type="range" id="k" min="0" max="6" value="3">
+<label class="f">Nhãn công khai (mỗi dòng 1 nhãn)</label><textarea id="pub">Dọn nhà
+Rửa bát
+Đổ rác</textarea>
+<label class="f">Nhãn bí mật (mỗi dòng 1 nhãn)</label><textarea id="sec">Được miễn 1 lần
+Mời trà sữa
+Hát 1 bài</textarea>
+<div class="hint" id="cnt"></div>
+<div class="btn big" id="apply">ÁP DỤNG &amp; XÁO TRỘN</div></div>
+<div class="card"><h2 style="background:#9BC9A7">DANH SÁCH BI</h2><div id="bl"></div></div>
+<div class="card"><h2 style="background:#F2A3A8">NHẬT KÝ</h2><ol id="log"></ol></div>
+</aside></main>
+<script>
+const $=s=>document.querySelector(s),cv=$('#c'),ctx=cv.getContext('2d');
+const SL=['#91B9E6','#F7F3EC'],MINT='#9BC9A7';
+const R=22.5,PR=8,G=420,DR=.45,SW=110,TOP=720,BOT=840,BAND=60,H=BOT+BAND+8,S=165; // bi to gấp 3; đinh cách nhau 2,75 lần đường kính bi; trọng lực thấp + cản gió để bi rơi lâu
+const PH=[0,.5,.25,.75,.125,.625]; // 4 pha lệch nhau để mọi đường rơi thẳng đều chạm đinh
+const F=p=>p+'px VT323,"Courier New",monospace';
+let N,K,W,sw,balls=[],slots=[],sims=[],pegs=[],segs=[],sel=0,phase=1,mx=null;
+const lines=id=>$(id).value.split('\n').map(s=>s.trim()).filter(Boolean);
+const shuffle=a=>{for(let i=a.length;i--;){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+function cnt(){const n=+$('#n').value;$('#k').max=n;if(+$('#k').value>n)$('#k').value=n;const k=+$('#k').value;$('#nv').textContent=n;$('#kv').textContent=k;
+ $('#cnt').textContent=`Công khai: ${lines('#pub').length}/${n-k} · Bí mật: ${lines('#sec').length}/${k} (thiếu sẽ tự đặt tên)`}
+function fit(){const w=$('#wrap'),s=Math.min((w.clientWidth-14)/W,(w.clientHeight-14)/H);cv.style.width=W*s+'px';cv.style.height=H*s+'px'}
+function setup(){
+ N=+$('#n').value;K=+$('#k').value;sw=Math.max(N*SW,540)/N;W=sw*N;cv.width=W;cv.height=H;
+ const pub=lines('#pub'),sec=lines('#sec'),L=[];
+ for(let i=0;i<N-K;i++)L.push({t:pub[i]||'Đích '+(i+1),s:0});
+ for(let i=0;i<K;i++)L.push({t:sec[i]||'Bí mật '+(i+1),s:1});
+ slots=shuffle(L).map(l=>({lab:l.t,sec:l.s,ball:null,torn:-1,a:0,rot:(Math.random()-.5)*.1,gate:null}));
+ const old=balls;balls=Array.from({length:N},(_,i)=>{const o=old[i]||{};return{name:o.name||'Bi '+(i+1),color:MINT,img:o.img,src:o.src,dropped:false}});
+ pegs=[];PH.forEach((ph,r)=>{for(let j=-12;j<=12;j++){const x=W/2+(j+ph)*S;if(x>=10&&x<=W-10)pegs.push({x,y:150+r*95})}});
+ segs=[];for(let i=0;i<=N;i++)segs.push([i*sw,(i&&i<N)?TOP:0,i*sw,BOT]);
+ sims=[];sel=0;phase=1;$('#log').innerHTML='';renderBalls();upd();fit();
+}
+function renderBalls(){const bl=$('#bl');bl.innerHTML='';balls.forEach((b,i)=>{
+ const d=document.createElement('div');d.className='ball'+(b.dropped?' off':'')+(i==sel?' sel':'');
+ d.innerHTML=`<i class="av" title="Chọn bi này" style="background:${b.color}">${b.src?`<img src="${b.src}">`:''}</i><input type="text" maxlength="14"><label class="btn">ẢNH<input type="file" accept="image/*" hidden></label>`;
+ const inp=d.querySelector('input[type=text]');inp.value=b.name;inp.oninput=()=>b.name=inp.value;inp.disabled=b.dropped;
+ d.querySelector('.av').onclick=()=>{if(!b.dropped){sel=i;renderBalls()}};
+ d.querySelector('input[type=file]').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{const im=new Image();im.onload=()=>{b.img=im;b.src=rd.result;renderBalls()};im.src=rd.result};rd.readAsDataURL(f)};
+ bl.appendChild(d)})}
+function upd(){const left=balls.filter(b=>!b.dropped).length,t=slots.filter(s=>s.sec&&s.torn<0).length;
+ $('#phase').textContent=phase==1?`PHASE 1 · THẢ BI (${left})`:`PHASE 2 · XÉ NHÃN (${t})`;
+ $('#tip').textContent=phase==1?'Chọn bi bên phải (bấm avatar), rồi bấm vào bàn chơi để thả bi tại vị trí đó.':'Bấm vào sticker ? bất kỳ để xé, thứ tự tùy bạn.'}
+function note(t){const li=document.createElement('li');li.textContent=t;$('#log').appendChild(li);li.scrollIntoView()}
+function bounce(b,nx,ny,hi){const vn=b.vx*nx+b.vy*ny;if(vn>=0)return;
+ const e=hi?1.6+Math.random()*.6:.4+Math.random()*.5;b.vx-=(1+e)*vn*nx;b.vy-=(1+e)*vn*ny;
+ const a=(Math.random()-.5)*.8,c=Math.cos(a),s=Math.sin(a),k=hi?250+Math.random()*200:Math.random()*130;
+ b.vx+=(nx*c-ny*s)*k;b.vy+=(nx*s+ny*c)*k}
+function circ(b,px,py,pr,hi){const dx=b.x-px,dy=b.y-py,d=Math.hypot(dx,dy),m=R+pr;
+ if(d<m&&d>0){const nx=dx/d,ny=dy/d;b.x=px+nx*m;b.y=py+ny*m;bounce(b,nx,ny,hi)}}
+function seg(b,a){const dx=a[2]-a[0],dy=a[3]-a[1];let t=((b.x-a[0])*dx+(b.y-a[1])*dy)/(dx*dx+dy*dy);t=Math.max(0,Math.min(1,t));circ(b,a[0]+t*dx,a[1]+t*dy,3,a[4])}
+function spikes(i){const x=i*sw,n=3,w=sw/n,a=[];for(let k=0;k<n;k++)a.push([x+k*w,TOP,x+k*w+w/2,TOP-26,1],[x+k*w+w/2,TOP-26,x+(k+1)*w,TOP,1]);return a}
+function step(dt){const all=segs.concat(...slots.filter(s=>s.gate).map(s=>s.gate));
+ for(const b of sims){
+  if(b.done){const q=b.auto?.05:.15;b.x+=(b.cx-b.x)*q;b.y+=(BOT-R-b.y)*q;continue}
+  b.vy+=G*dt;const dg=1-DR*dt;b.vx*=dg;b.vy*=dg;b.x+=b.vx*dt;b.y+=b.vy*dt;
+  const sp=Math.hypot(b.vx,b.vy);if(sp>700){b.vx*=700/sp;b.vy*=700/sp}
+  for(const p of pegs)circ(b,p.x,p.y,PR);
+  for(const a of all)seg(b,a);
+  if(b.y>BOT-R){b.y=BOT-R;b.vy*=-.25;b.vx*=.85}
+  if(b.slot==null&&b.y>TOP+R+6){const i=Math.min(N-1,Math.max(0,b.x/sw|0)),s=slots[i];
+   if(!s.ball){s.ball=b;b.slot=i;s.gate=spikes(i);note(`${balls[b.i].name} vào đích ${i+1}`)}}
+  if(b.slot!=null){b.t+=dt;if(b.t>1.8){b.done=true;b.cx=(b.slot+.5)*sw}}
+ }
+ for(let a=0;a<sims.length;a++)for(let c=a+1;c<sims.length;c++){const p=sims[a],q=sims[c];if(p.done||q.done)continue;
+  const dx=q.x-p.x,dy=q.y-p.y,d=Math.hypot(dx,dy);
+  if(d<2*R&&d>0){const nx=dx/d,ny=dy/d,o=(2*R-d)/2;p.x-=nx*o;p.y-=ny*o;q.x+=nx*o;q.y+=ny*o;
+   const vn=(q.vx-p.vx)*nx+(q.vy-p.vy)*ny;if(vn<0){const j=-.75*vn;p.vx-=j*nx;p.vy-=j*ny;q.vx+=j*nx;q.vy+=j*ny}}}
+}
+function wrap(t,w,max=2){const o=[];let l='';for(const word of t.split(/\s+/)){const tr=l?l+' '+word:word;if(ctx.measureText(tr).width<=w){l=tr;continue}
+ if(l)o.push(l);l=word;while(ctx.measureText(l).width>w){let k=l.length;while(k>1&&ctx.measureText(l.slice(0,k)).width>w)k--;o.push(l.slice(0,k));l=l.slice(k)}}
+ if(l)o.push(l);return o.slice(0,max)}
+function drawBall(x,y,i,name){const b=balls[i];ctx.save();ctx.beginPath();ctx.arc(x,y,R,0,7);ctx.fillStyle=b.color;ctx.fill();
+ if(b.img){ctx.clip();ctx.drawImage(b.img,x-R,y-R,2*R,2*R)}ctx.restore();
+ ctx.beginPath();ctx.arc(x,y,R,0,7);ctx.lineWidth=3;ctx.strokeStyle='#34465C';ctx.stroke();
+ ctx.font=F(24);ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#F7F3EC';ctx.strokeText(name,x,y-R-8);ctx.fillStyle='#34465C';ctx.fillText(name,x,y-R-8)}
+function sticker(cx,cy,i,s){ctx.save();ctx.translate(cx,cy);ctx.rotate(s.rot);
+ if(s.torn>=0){const p=s.a;ctx.translate(p*40,p*60);ctx.rotate(p*1.4);ctx.globalAlpha=1-p}
+ const w=sw-4,h=BAND-4;ctx.fillStyle='#34465C';ctx.fillRect(-w/2+4,-h/2+4,w,h);ctx.fillStyle='#F2D477';ctx.fillRect(-w/2,-h/2,w,h);
+ ctx.fillStyle='rgba(0,0,0,.22)';ctx.beginPath();ctx.moveTo(w/2,h/2-14);ctx.lineTo(w/2,h/2);ctx.lineTo(w/2-14,h/2);ctx.closePath();ctx.fill();
+ ctx.lineWidth=3;ctx.strokeStyle='#34465C';ctx.strokeRect(-w/2,-h/2,w,h);
+ ctx.font=F(56);ctx.fillStyle='#34465C';ctx.textAlign='center';ctx.fillText('?',0,18);ctx.restore()}
+function draw(dt){
+ ctx.fillStyle='#F7F3EC';ctx.fillRect(0,0,W,H);ctx.fillStyle='#E6E0D3';
+ for(let x=0;x<W;x+=20)for(let y=0;y<H;y+=20)ctx.fillRect(x,y,2,2);
+ slots.forEach((s,i)=>{ctx.fillStyle=SL[i%2];ctx.globalAlpha=.4;ctx.fillRect(i*sw,TOP,sw,BOT-TOP);ctx.globalAlpha=1;
+  ctx.fillStyle=SL[i%2];ctx.fillRect(i*sw,BOT,sw,BAND);ctx.strokeStyle='#34465C';ctx.lineWidth=4;ctx.strokeRect(i*sw,BOT,sw,BAND);
+  ctx.font=F(24);ctx.fillStyle='#34465C';ctx.textAlign='center';const ls=wrap(s.lab,sw-10);ls.forEach((l,k)=>ctx.fillText(l,(i+.5)*sw,BOT+BAND/2+7-(ls.length-1)*11+k*22))});
+ ctx.lineCap='square';ctx.strokeStyle='#91B9E6';ctx.lineWidth=6;segs.forEach(a=>{ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(a[2],a[3]);ctx.stroke()});
+ for(const p of pegs){ctx.beginPath();ctx.arc(p.x,p.y,PR+1,0,7);ctx.fillStyle='#91B9E6';ctx.fill();ctx.lineWidth=3;ctx.strokeStyle='#34465C';ctx.stroke()}
+ for(const s of slots)if(s.gate){const g=s.gate;ctx.beginPath();ctx.moveTo(g[0][0],TOP);g.forEach(a=>ctx.lineTo(a[2],a[3]));ctx.lineTo(g[g.length-1][2],TOP+8);ctx.lineTo(g[0][0],TOP+8);ctx.closePath();ctx.fillStyle='#F2A3A8';ctx.fill();ctx.lineWidth=5;ctx.lineJoin='miter';ctx.strokeStyle='#F7F3EC';ctx.stroke()}
+ slots.forEach((s,i)=>{if(!s.sec)return;if(s.torn>=0)s.a=Math.min(1,s.a+dt*2);if(s.a<1)sticker((i+.5)*sw,BOT+BAND/2,i,s)});
+ for(const b of sims)drawBall(b.x,b.y,b.i,balls[b.i].name);
+ if(phase==1&&sel>=0&&mx!=null){const x=Math.max(R+10,Math.min(W-R-10,mx));ctx.setLineDash([8,8]);ctx.strokeStyle='#F2A3A8';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x,95);ctx.lineTo(x,135);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=.7;drawBall(x,62,sel,balls[sel].name);ctx.globalAlpha=1}
+}
+const pt=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]};
+const hit=(x,y)=>{const i=Math.floor(x/sw),s=slots[i];return(phase==2&&s&&s.sec&&s.torn<0&&y>BOT&&y<BOT+BAND)?i:-1};
+cv.onpointermove=e=>{const[x,y]=pt(e);mx=x;cv.style.cursor=phase==2?(hit(x,y)>=0?'pointer':'default'):'crosshair'};
+cv.onclick=e=>{const[x,y]=pt(e);
+ if(phase==1){if(sel<0)return;const b=balls[sel];b.dropped=true;
+  sims.push({i:sel,x:Math.max(R+10,Math.min(W-R-10,x)),y:62,vx:(Math.random()-.5)*50,vy:0,slot:null,t:0,done:false});
+  sel=balls.findIndex(b=>!b.dropped);renderBalls();upd()}
+ else{const i=hit(x,y);if(i>=0){const s=slots[i];s.torn=0;s.a=0;note(`XÉ: ${balls[s.ball.i].name} - ${s.lab}`);upd()}}};
+$('#apply').onclick=setup;['#n','#k','#pub','#sec'].forEach(s=>$(s).oninput=cnt);addEventListener('resize',fit);
+let last=performance.now();
+function loop(t){const dt=Math.min(.033,(t-last)/1000);last=t;
+ for(let k=0;k<5;k++)step(dt/5);
+ if(phase==1&&sims.length==N){const f=sims.filter(b=>b.slot==null);if(f.length==1){const i=slots.findIndex(s=>!s.ball);if(i>=0){const b=f[0],s=slots[i];s.ball=b;b.slot=i;s.gate=spikes(i);b.done=true;b.auto=1;b.cx=(i+.5)*sw;note(`${balls[b.i].name} là bi cuối: tự vào đích ${i+1}`)}}}
+ if(phase==1&&balls.every(b=>b.dropped)&&sims.every(s=>s.done)){phase=2;upd();note('--- PHASE 2: xé nhãn bí mật ---')}
+ draw(dt);requestAnimationFrame(loop)}
+cnt();setup();requestAnimationFrame(loop);
+</script></body></html>
